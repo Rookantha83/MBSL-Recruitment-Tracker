@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recruitment Tracker System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        table th {
+            background-color: #f2f2f2;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .status-update select {
+            width: auto;
+            margin-right: 10px;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        .date-cell {
+            font-size: 0.9em;
+            color: #555;
+        }
+        .download-btn {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recruitment Tracker System</h1>
+    <div class="container">
+        <h2>Add Candidate</h2>
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" placeholder="Enter candidate's name">
+        </div>
+        <div class="form-group">
+            <label for="position">Position:</label>
+            <input type="text" id="position" placeholder="Enter position applied for">
+        </div>
+        <div class="form-group">
+            <label for="status">Status:</label>
+            <select id="status">
+                <option value="Applied">Applied</option>
+                <option value="Interviewing">Interviewing</option>
+                <option value="Offered">Offered</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+        </div>
+        <button onclick="addCandidate()">Add Candidate</button>
+
+        <h2>Candidate List</h2>
+        <table id="candidateTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Position</th>
+                    <th>Status</th>
+                    <th>Last Updated</th>
+                    <th>Documents Uploaded</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Candidates will be dynamically added here -->
+            </tbody>
+        </table>
+        <button class="download-btn" onclick="exportToExcel()">Download as Excel</button>
+    </div>
+
+    <script>
+        function addCandidate() {
+            const name = document.getElementById('name').value.trim();
+            const position = document.getElementById('position').value.trim();
+            const status = document.getElementById('status').value;
+
+            if (!name || !position) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            const tableBody = document.querySelector("#candidateTable tbody");
+
+            const newRow = document.createElement("tr");
+
+            const nameCell = document.createElement("td");
+            nameCell.textContent = name;
+            newRow.appendChild(nameCell);
+
+            const positionCell = document.createElement("td");
+            positionCell.textContent = position;
+            newRow.appendChild(positionCell);
+
+            const statusCell = document.createElement("td");
+            const statusSelect = document.createElement("select");
+            statusSelect.innerHTML = `
+                <option value="Applied">Applied</option>
+                <option value="Interviewing">Interviewing</option>
+                <option value="Offered">Offered</option>
+                <option value="Rejected">Rejected</option>
+            `;
+            statusSelect.value = status;
+            statusSelect.onchange = function () {
+                updateStatus(newRow, statusSelect.value);
+            };
+            statusCell.appendChild(statusSelect);
+            newRow.appendChild(statusCell);
+
+            const dateCell = document.createElement("td");
+            dateCell.className = "date-cell";
+            const currentDate = new Date().toLocaleString();
+            dateCell.textContent = currentDate;
+            newRow.appendChild(dateCell);
+
+            const documentsCell = document.createElement("td");
+            const uploadInput = document.createElement("input");
+            uploadInput.type = "file";
+            uploadInput.multiple = true;
+            uploadInput.onchange = function () {
+                const files = Array.from(uploadInput.files).map(file => file.name).join(", ");
+                documentsCell.textContent = files || "No documents uploaded";
+            };
+            documentsCell.appendChild(uploadInput);
+            newRow.appendChild(documentsCell);
+
+            const actionCell = document.createElement("td");
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.className = "delete-btn";
+            deleteButton.onclick = function () {
+                tableBody.removeChild(newRow);
+            };
+            actionCell.appendChild(deleteButton);
+            newRow.appendChild(actionCell);
+
+            tableBody.appendChild(newRow);
+
+            // Clear form fields
+            document.getElementById('name').value = '';
+            document.getElementById('position').value = '';
+            document.getElementById('status').value = 'Applied';
+        }
+
+        function updateStatus(row, newStatus) {
+            const dateCell = row.cells[3];
+            dateCell.textContent = new Date().toLocaleString();
+
+            const statusCell = row.cells[2];
+            const currentStatus = statusCell.querySelector("select");
+            currentStatus.value = newStatus;
+        }
+
+        function exportToExcel() {
+            const table = document.getElementById("candidateTable");
+            const rows = table.querySelectorAll("tr");
+            let csvContent = "";
+
+            rows.forEach(row => {
+                const rowData = [];
+                const cells = row.querySelectorAll("td, th");
+
+                cells.forEach(cell => {
+                    let cellData = cell.textContent.trim();
+                    if (cell.querySelector("select")) {
+                        cellData = cell.querySelector("select").value;
+                    } else if (cell.querySelector("input[type='file']")) {
+                        cellData = cell.textContent.trim() || "No documents uploaded";
+                    }
+                    rowData.push(`"${cellData.replace(/"/g, '""')}"`);
+                });
+
+                csvContent += rowData.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "recruitment_tracker.csv");
+            link.style.visibility = "hidden";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
